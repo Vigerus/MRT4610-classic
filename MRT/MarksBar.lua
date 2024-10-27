@@ -448,6 +448,495 @@ mainFrame.pull.html:SetShadowOffset(1,-1)
 
 ELib:FixPreloadFont(mainFrame.pull,mainFrame.pull.html,ExRT.F.defFont, 10)
 
+-- this is my domain LUSO
+
+local instanceName = GetInstanceInfo()
+local progress_counter = 0
+local progress_label =  instanceName
+local progress_static_frames = {}
+local progress_frames = {}
+
+local function GenerateStaticTask(i, text, fct)
+	local newFrame = CreateFrame("Button",nil,mainFrame,BackdropTemplateMixin and "BackdropTemplate")
+	newFrame:SetSize(60,24)
+	newFrame:SetPoint("TOPLEFT",mainFrame.edges[1], (i%6)*64 + 300, -88 - math.floor(i/6)* 27 )
+	newFrame:SetBackdrop({bgFile = ExRT.F.barImg,edgeFile = ExRT.F.defBorder,tile = false,edgeSize = 6})
+	newFrame:SetBackdropColor(0,0,0,0)
+	newFrame:SetBackdropBorderColor(0.4,0.4,0.4,1)
+	newFrame:SetScript("OnEnter",function(self) 
+		self:SetBackdropBorderColor(0.7,0.7,0.7,1)
+	end)	
+	newFrame:SetScript("OnLeave", function(self)    
+		self:SetBackdropBorderColor(0.4,0.4,0.4,1)
+	end)
+	newFrame:SetScript("OnMouseDown", fct)
+
+	newFrame.html = newFrame:CreateFontString(nil,"ARTWORK","GameFontWhite")
+	newFrame.html:SetFont(ExRT.F.defFont, 10)
+	newFrame.html:SetAllPoints()
+	newFrame.html:SetJustifyH("CENTER")
+	newFrame.html:SetText(text)
+	newFrame.html:SetShadowOffset(1,-1)
+
+	ELib:FixPreloadFont(newFrame,newFrame.html,ExRT.F.defFont, 10)
+	table.insert(progress_static_frames, newFrame)
+end
+
+local function GenerateTask(i, text, fct)
+	local newFrame = CreateFrame("Button",nil,mainFrame,BackdropTemplateMixin and "BackdropTemplate")
+	newFrame:SetSize(120,24)
+	newFrame:SetPoint("TOPLEFT",mainFrame.edges[1], (i%3)*124, -88 - math.floor(i/3)* 27 )
+	newFrame:SetBackdrop({bgFile = ExRT.F.barImg,edgeFile = ExRT.F.defBorder,tile = false,edgeSize = 6})
+	newFrame:SetBackdropColor(0,0,0,0)
+	newFrame:SetBackdropBorderColor(0.4,0.4,0.4,1)
+	newFrame:SetScript("OnEnter",function(self) 
+		self:SetBackdropBorderColor(0.7,0.7,0.7,1)
+	end)	
+	newFrame:SetScript("OnLeave", function(self)    
+		self:SetBackdropBorderColor(0.4,0.4,0.4,1)
+	end)
+	newFrame:SetScript("OnMouseDown", fct)
+
+	newFrame.html = newFrame:CreateFontString(nil,"ARTWORK","GameFontWhite")
+	newFrame.html:SetFont(ExRT.F.defFont, 10)
+	newFrame.html:SetAllPoints()
+	newFrame.html:SetJustifyH("CENTER")
+	newFrame.html:SetText(text)
+	newFrame.html:SetShadowOffset(1,-1)
+
+	ELib:FixPreloadFont(newFrame,newFrame.html,ExRT.F.defFont, 10)
+	table.insert(progress_frames, newFrame)
+end
+
+local function GetInstanceProgressSteps()
+	instanceName = GetInstanceInfo()
+
+	if instanceName == "Molten Core" then
+		return 25
+	elseif instanceName == "Blackwing Lair" then
+		return 1
+	elseif instanceName == "Naxxramas" then		
+		return 1
+	end
+
+	return 1
+end
+
+
+local function RefreshProgress()
+	instanceName = GetInstanceInfo()
+	progress_label =  instanceName
+
+    for _, frame in ipairs(progress_frames) do
+        frame:Hide()  -- Hide the frame
+        frame:SetParent(nil)  -- Remove it from the UI hierarchy
+    end
+	wipe(progress_frames)
+
+	-- MOLTEN CORE SECTION
+	if instanceName == "Molten Core" then
+		if progress_counter == 0 then
+			progress_label = "[Molten Core]"
+			GenerateTask(1, "Initial Setup", function(self,button) 
+				SendChatMessage("follow","RAID",nil,nil)
+				SendChatMessage("rti skull","WHISPER",nil,"Rottentank")
+				SendChatMessage("rti cross","WHISPER",nil,"Rottenbear")
+				SendChatMessage("rti circle","WHISPER",nil,"Blindtank")
+				SendChatMessage("rti triangle","WHISPER",nil,"Blindbear")
+				SendChatMessage("rti star","WHISPER",nil,"Blindofftank")
+				SendChatMessage("rti cc diamond","WHISPER",nil,"Rottenlock")
+				SendChatMessage("rti cc moon","WHISPER",nil,"Blindlock")
+			end)
+		elseif progress_counter == 1 then
+			progress_label = "MC[1]: Road to Lucifron"
+			GenerateTask(0, "Follow", function(self,button) 
+				SendChatMessage("follow","RAID",nil,nil)
+			end)		
+			GenerateTask(1, "Pull", function(self,button) 
+				SendChatMessage("pull rti","WHISPER",nil,"Rottentank")
+				SendChatMessage("pull rti","WHISPER",nil,"Rottenbear")
+			end)		
+			GenerateTask(3, "Stay", function(self,button) 
+				SendChatMessage("stay","RAID",nil,nil)
+			end)		
+		elseif progress_counter == 2 then
+			progress_label = "MC[2]: Dog Packs"
+		elseif progress_counter == 3 then
+			progress_label = "MC[3]: Lucifron"
+		elseif progress_counter == 4 then
+			progress_label = "MC[4]: Dog Packs #2"
+		elseif progress_counter == 5 then
+			progress_label = "MC[5]: Magmadar"
+		elseif progress_counter == 6 then
+			progress_label = "MC[6]: Rune Douse #1"
+			GenerateTask(0, "Douse", function(self,button) 
+				SendChatMessage("nc +molten core","RAID",nil,nil)
+				C_Timer.After(5, function()
+					SendChatMessage("nc -molten core","RAID",nil,nil)
+				end)
+			end)			
+		elseif progress_counter == 7 then
+			progress_label = "MC[7]: Road to Gehennas"
+		elseif progress_counter == 8 then
+			progress_label = "MC[8]: Gehennas"
+		elseif progress_counter == 9 then
+			progress_label = "MC[9]: Rune Douse #2"
+			GenerateTask(0, "Douse", function(self,button) 
+				SendChatMessage("nc +molten core","RAID",nil,nil)
+				C_Timer.After(5, function()
+					SendChatMessage("nc -molten core","RAID",nil,nil)
+				end)
+			end)			
+		elseif progress_counter == 10 then
+			progress_label = "MC[10]: Garr Cleanup"
+		elseif progress_counter == 11 then
+			progress_label = "MC[11]: Garr"
+			GenerateTask(0, "Prepare", function(self,button) 
+				SendChatMessage("follow","RAID",nil,nil)
+				SendChatMessage("range followraid 10","RAID",nil,nil)
+				SendChatMessage("formation arrow","RAID",nil,nil)
+				SendChatMessage("rti skull","WHISPER",nil,"Rottentank")
+				SendChatMessage("rti cross","WHISPER",nil,"Rottenbear")
+				SendChatMessage("rti circle","WHISPER",nil,"Blindtank")
+				SendChatMessage("rti triangle","WHISPER",nil,"Blindbear")
+				SendChatMessage("rti star","WHISPER",nil,"Blindofftank")
+				SendChatMessage("rti cc diamond","WHISPER",nil,"Rottenlock")
+				SendChatMessage("rti cc moon","WHISPER",nil,"Blindlock")
+			end)			
+		elseif progress_counter == 12 then
+			progress_label = "MC[12]: Rune Douse #3"
+			GenerateTask(0, "Douse", function(self,button) 
+				SendChatMessage("nc +molten core","RAID",nil,nil)
+				C_Timer.After(5, function()
+					SendChatMessage("nc -molten core","RAID",nil,nil)
+				end)
+			end)			
+		elseif progress_counter == 13 then
+			progress_label = "MC[13]: Baron Cleanup"
+			GenerateTask(0, "Prepare", function(self,button) 
+				SendChatMessage("follow","RAID",nil,nil)
+				SendChatMessage("range followraid 1","RAID",nil,nil)
+				SendChatMessage("formation near","RAID",nil,nil)
+			end)					
+		elseif progress_counter == 14 then
+			progress_label = "MC[14]:Baron Geddon"
+			-- 3 spots should be saved prior to this tactics:
+			-- baronbomb - spot for bomb
+			-- baronmelee
+			-- baronranged
+			GenerateTask(0, "Setup", function(self,button) 
+				SendChatMessage("stay","RAID",nil,nil)
+				SendChatMessage("@tank free","RAID",nil,nil)
+				SendChatMessage("rti skull","RAID",nil,nil)
+				SendChatMessage("u 13457","RAID",nil,nil)
+				SendChatMessage("@mage u 13512","RAID",nil,nil)
+				SendChatMessage("@mage u 13454","RAID",nil,nil)		
+				SendChatMessage("@dps co +threat","RAID",nil,nil)
+				SendChatMessage("rtsc go baronranged","RAID",nil,nil)
+			end)
+			GenerateTask(1, "Pull", function(self,button) 
+				SendChatMessage("@melee @tank rtsc go baronmelee","RAID",nil,nil)
+			end)			
+			GenerateTask(2, "Melee MoveOut", function(self,button) 
+				SendChatMessage("@melee @tank rtsc go baronranged","RAID",nil,nil)
+			end)
+			GenerateTask(4, "Unit go melee", function(self,button) 
+				SendChatMessage("rtsc go baronmelee","WHISPER",nil,UnitName("target"))
+			end)			
+			GenerateTask(5, "Melee Return", function(self,button) 
+				SendChatMessage("@melee @tank rtsc go baronmelee","RAID",nil,nil)
+			end)
+		elseif progress_counter == 15 then
+			progress_label = "MC[15]: Shazzrah cleanup"			
+			GenerateTask(0, "Prepare", function(self,button) 
+				SendChatMessage("follow","RAID",nil,nil)
+				SendChatMessage("range followraid 1","RAID",nil,nil)
+				SendChatMessage("formation near","RAID",nil,nil)
+				SendChatMessage("rti skull","WHISPER",nil,"Rottentank")
+				SendChatMessage("rti cross","WHISPER",nil,"Rottenbear")
+				SendChatMessage("rti circle","WHISPER",nil,"Blindtank")
+				SendChatMessage("rti triangle","WHISPER",nil,"Blindbear")
+				SendChatMessage("rti star","WHISPER",nil,"Blindofftank")
+				SendChatMessage("rti cc diamond","WHISPER",nil,"Rottenlock")
+				SendChatMessage("rti cc moon","WHISPER",nil,"Blindlock")				
+			end)
+			GenerateTask(1, "Pull", function(self,button) 
+				SendChatMessage("pull rti","WHISPER",nil,"Rottentank")
+				SendChatMessage("pull rti","WHISPER",nil,"Rottenbear")
+				SendChatMessage("pull rti","WHISPER",nil,"Blindtank")
+				SendChatMessage("pull rti","WHISPER",nil,"Blindbear")
+			end)		
+			GenerateTask(3, "Stay", function(self,button) 
+				SendChatMessage("stay","RAID",nil,nil)
+			end)	
+		elseif progress_counter == 16 then
+			progress_label = "MC[16]: Shazzrah"			
+			GenerateTask(0, "Prepare", function(self,button) 
+				SendChatMessage("stay","RAID",nil,nil)
+				SendChatMessage("@melee @tank free","RAID",nil,nil)
+				SendChatMessage("rti skull","RAID",nil,nil)
+			end)
+			GenerateTask(1, "Pull", function(self,button) 
+				SendChatMessage("pull","WHISPER",nil,"Rottentank")
+			end)		
+			GenerateTask(3, "Stay", function(self,button) 
+				SendChatMessage("stay","RAID",nil,nil)
+			end)							
+		elseif progress_counter == 17 then
+			progress_label = "MC[17]: Road to Sulfuron"		
+		elseif progress_counter == 18 then
+			progress_label = "MC[18]: Sulfuron"					
+		elseif progress_counter == 19 then
+			progress_label = "MC[19]: Road to Golemagg"		
+		elseif progress_counter == 20 then
+			progress_label = "MC[20]: Golemagg"							
+			GenerateTask(0, "Prepare", function(self,button) 
+				SendChatMessage("follow","RAID",nil,nil)
+				SendChatMessage("range followraid 1","RAID",nil,nil)
+				SendChatMessage("formation near","RAID",nil,nil)
+				SendChatMessage("rti skull","WHISPER",nil,"Rottentank")
+				SendChatMessage("rti skull","WHISPER",nil,"Rottenbear")
+				SendChatMessage("rti cross","WHISPER",nil,"Blindtank")
+				SendChatMessage("rti cross","WHISPER",nil,"Blindbear")
+				SendChatMessage("rti triangle","WHISPER",nil,"Blindofftank")
+				SendChatMessage("rti triangle","WHISPER",nil,"Rottenprot")
+				SendChatMessage("focus heal +Rottentank,+Rottenbear","WHISPER",nil,"Rottenheal")
+				SendChatMessage("focus heal +Rottentank,+Rottenbear","WHISPER",nil,"Rottenhealz")
+				SendChatMessage("focus heal +Blindtank,+Blindbear","WHISPER",nil,"Blinddisc")
+				SendChatMessage("focus heal +Blindtank,+Blindbear","WHISPER",nil,"Blindheals")
+				SendChatMessage("focus heal +Blindofftank,+Rottenprot","WHISPER",nil,"Blindholy")
+				SendChatMessage("focus heal +Blindofftank,+Rottenprot","WHISPER",nil,"Logout")
+				SendChatMessage("focus heal none","WHISPER",nil,"Rottendisc")
+			end)
+			GenerateTask(1, "Pull", function(self,button) 
+				SendChatMessage("u 17552", "RAID", nil, nil)
+				SendChatMessage("pull rti","WHISPER",nil,"Rottentank")
+				SendChatMessage("pull rti","WHISPER",nil,"Rottenbear")
+				SendChatMessage("pull rti","WHISPER",nil,"Blindtank")
+				SendChatMessage("pull rti","WHISPER",nil,"Blindbear")
+				SendChatMessage("pull rti","WHISPER",nil,"Rottenprot")
+				SendChatMessage("pull rti","WHISPER",nil,"Blindofftank")
+			end)		
+			GenerateTask(2, "MoveTanks", function(self,button) 
+				SendChatMessage("rtsc go golemaggspot","WHISPER",nil,"Rottentank")
+				SendChatMessage("rtsc go golemaggspot","WHISPER",nil,"Rottenbear")
+				SendChatMessage("rtsc go golemaggadds","WHISPER",nil,"Blindtank")
+				SendChatMessage("rtsc go golemaggadds","WHISPER",nil,"Blindbear")
+				SendChatMessage("rtsc go golemaggadds","WHISPER",nil,"Rottenprot")
+				SendChatMessage("rtsc go golemaggadds","WHISPER",nil,"Blindofftank")
+			end)
+			GenerateTask(3, "FireProt", function(self,button) 
+				SendChatMessage("u 13457","RAID",nil,nil)
+			end)		
+			
+		elseif progress_counter == 21 then
+			progress_label = "MC[21]: Road to Majordomo"
+			GenerateTask(0, "Prepare", function(self,button) 
+				SendChatMessage("follow","RAID",nil,nil)
+				SendChatMessage("range followraid 1","RAID",nil,nil)
+				SendChatMessage("formation near","RAID",nil,nil)
+				SendChatMessage("rti skull","WHISPER",nil,"Rottentank")
+				SendChatMessage("rti cross","WHISPER",nil,"Rottenbear")
+				SendChatMessage("rti circle","WHISPER",nil,"Blindtank")
+				SendChatMessage("rti triangle","WHISPER",nil,"Blindbear")
+				SendChatMessage("rti star","WHISPER",nil,"Blindofftank")
+				SendChatMessage("rti cc diamond","WHISPER",nil,"Rottenlock")
+				SendChatMessage("rti cc moon","WHISPER",nil,"Blindlock")	
+				SendChatMessage("focus heal none","WHISPER",nil,"Rottenheal")
+				SendChatMessage("focus heal none","WHISPER",nil,"Rottenhealz")
+				SendChatMessage("focus heal none","WHISPER",nil,"Blinddisc")
+				SendChatMessage("focus heal none","WHISPER",nil,"Blindheals")
+				SendChatMessage("focus heal none","WHISPER",nil,"Blindholy")
+				SendChatMessage("focus heal none","WHISPER",nil,"Logout")
+				SendChatMessage("focus heal none","WHISPER",nil,"Rottendisc")
+			end)					
+		elseif progress_counter == 22 then
+			progress_label = "MC[22]: Majordomo himself"
+			GenerateTask(0, "Prepare", function(self,button) 
+				SendChatMessage("@tank @melee follow","RAID",nil,nil)
+				SendChatMessage("range followraid 1","RAID",nil,nil)
+				SendChatMessage("formation near","RAID",nil,nil)
+				SendChatMessage("@ranged @heal stay","RAID",nil,nil)				
+				SendChatMessage("@ranged @heal rtsc go majorsafe","RAID",nil,nil)
+				SendChatMessage("rti skull","WHISPER",nil,"Rottentank")
+				SendChatMessage("rti cross","WHISPER",nil,"Rottenbear")
+				SendChatMessage("rti circle","WHISPER",nil,"Blindtank")
+				SendChatMessage("rti square","WHISPER",nil,"Blindbear")
+				SendChatMessage("rti none","WHISPER",nil,"Blindofftank")
+				SendChatMessage("rti cross","WHISPER",nil,"Rottenprot")				
+				SendChatMessage("rti cc triangle","WHISPER",nil,"Rottenmage")
+				SendChatMessage("rti cc star","WHISPER",nil,"Rottenmaeg")
+				SendChatMessage("rti cc diamond","WHISPER",nil,"Rottenfrost")
+				SendChatMessage("rti cc moon","WHISPER",nil,"Blindfrost")	
+				SendChatMessage("focus heal +Rottentank,+Rottenbear","WHISPER",nil,"Rottenheal")
+				SendChatMessage("focus heal +Rottentank,+Rottenbear","WHISPER",nil,"Rottenhealz")
+				SendChatMessage("focus heal +Blindtank,+Blindbear","WHISPER",nil,"Blinddisc")
+				SendChatMessage("focus heal +Blindtank,+Blindbear","WHISPER",nil,"Blindheals")
+				SendChatMessage("focus heal +Blindofftank,+Rottenprot","WHISPER",nil,"Blindholy")
+				SendChatMessage("focus heal +Blindofftank,+Rottenprot","WHISPER",nil,"Logout")
+				SendChatMessage("focus heal none","WHISPER",nil,"Rottendisc")
+			end)
+			GenerateTask(1, "MoveTanks", function(self,button) 
+				SendChatMessage("rtsc go majortanking","WHISPER",nil,"Rottenbear")
+				SendChatMessage("rtsc go majortanking","WHISPER",nil,"Rottenprot")
+
+				SendChatMessage("rtsc go majoraddtanking","WHISPER",nil,"Rottentank")				
+				SendChatMessage("rtsc go majoraddtanking","WHISPER",nil,"Blindtank")
+				SendChatMessage("rtsc go majoraddtanking","WHISPER",nil,"Blindbear")				
+				SendChatMessage("rtsc go majoraddtanking","WHISPER",nil,"Blindofftank")
+			end)		
+		elseif progress_counter == 23 then
+			progress_label = "MC[23]: Road to Ragnaros"
+			GenerateTask(0, "Prepare", function(self,button) 
+				SendChatMessage("follow","RAID",nil,nil)
+				SendChatMessage("range followraid 1","RAID",nil,nil)
+				SendChatMessage("formation near","RAID",nil,nil)				
+				SendChatMessage("rti skull","WHISPER",nil,"Rottentank")
+				SendChatMessage("rti cross","WHISPER",nil,"Rottenbear")
+				SendChatMessage("rti circle","WHISPER",nil,"Blindtank")
+				SendChatMessage("rti square","WHISPER",nil,"Blindbear")
+				SendChatMessage("rti none","WHISPER",nil,"Blindofftank")
+				SendChatMessage("rti none","WHISPER",nil,"Rottenprot")
+				SendChatMessage("focus heal none","WHISPER",nil,"Rottenheal")
+				SendChatMessage("focus heal none","WHISPER",nil,"Rottenhealz")
+				SendChatMessage("focus heal none","WHISPER",nil,"Blinddisc")
+				SendChatMessage("focus heal none","WHISPER",nil,"Blindheals")
+				SendChatMessage("focus heal none","WHISPER",nil,"Blindholy")
+				SendChatMessage("focus heal none","WHISPER",nil,"Logout")
+				SendChatMessage("focus heal none","WHISPER",nil,"Rottendisc")
+			end)			
+		elseif progress_counter == 24 then
+			progress_label = "MC[24]: RAGGY"
+			GenerateTask(0, "Prepare", function(self,button) 
+				SendChatMessage("free","RAID",nil,nil)
+				SendChatMessage("rti skull","RAID",nil,nil)
+				SendChatMessage("focus heal +Rottentank,+Rottenbear","WHISPER",nil,"Rottenheal")
+				SendChatMessage("focus heal +Rottentank,+Rottenbear","WHISPER",nil,"Rottenhealz")
+				SendChatMessage("rtsc go ragnarosspot","RAID",nil,nil)
+			end)
+			GenerateTask(1, "Return to your posts", function(self,button) 
+				SendChatMessage("rtsc go ragnarosspot","RAID",nil,nil)
+			end)			
+			GenerateTask(3, "FireProt", function(self,button) 
+				SendChatMessage("u 13457","RAID",nil,nil)
+			end)						
+		end
+	-- BLACKWING LAIR SECTION
+	elseif instanceName == "Blackwing Lair" then
+		if progress_counter == 0 then
+			progress_label = "[Blackwing Lair]"
+			GenerateTask(1, "Initial Setup", function(self,button) 
+				SendChatMessage("follow","RAID",nil,nil)
+			end)
+		end
+
+	elseif instanceName == "Naxxramas" then
+
+	end
+
+end
+
+mainFrame.prev = CreateFrame("Button",nil,mainFrame,BackdropTemplateMixin and "BackdropTemplate")
+mainFrame.prev:SetSize(120,24)
+mainFrame.prev:SetPoint("TOPLEFT",mainFrame.edges[1],0, -48)
+mainFrame.prev:SetBackdrop({bgFile = ExRT.F.barImg,edgeFile = ExRT.F.defBorder,tile = false,edgeSize = 6})
+mainFrame.prev:SetBackdropColor(0,0,0,0)
+mainFrame.prev:SetBackdropBorderColor(0.4,0.4,0.4,1)
+mainFrame.prev:SetScript("OnEnter",function(self) 
+	self:SetBackdropBorderColor(0.7,0.7,0.7,1)
+end)	
+mainFrame.prev:SetScript("OnLeave", function(self)    
+	self:SetBackdropBorderColor(0.4,0.4,0.4,1)
+end)
+mainFrame.prev:SetScript("OnMouseDown", function(self,button) 
+	progress_steps = GetInstanceProgressSteps()
+	progress_counter = (progress_counter + progress_steps - 1) % progress_steps
+	RefreshProgress()
+	mainFrame.curr.html:SetText(progress_label) 	
+end)
+
+mainFrame.prev.html = mainFrame.prev:CreateFontString(nil,"ARTWORK","GameFontWhite")
+mainFrame.prev.html:SetFont(ExRT.F.defFont, 10)
+mainFrame.prev.html:SetAllPoints()
+mainFrame.prev.html:SetJustifyH("CENTER")
+mainFrame.prev.html:SetText("<< PREV PHASE")
+mainFrame.prev.html:SetShadowOffset(1,-1)
+
+ELib:FixPreloadFont(mainFrame.prev,mainFrame.prev.html,ExRT.F.defFont, 10)
+
+mainFrame.curr = CreateFrame("Button",nil,mainFrame,BackdropTemplateMixin and "BackdropTemplate")
+mainFrame.curr:SetSize(120,24)
+mainFrame.curr:SetPoint("TOPLEFT",mainFrame.edges[1],124, -48)
+mainFrame.curr:SetBackdrop({bgFile = ExRT.F.barImg,edgeFile = ExRT.F.defBorder,tile = false,edgeSize = 6})
+mainFrame.curr:SetBackdropColor(0,0,0,0)
+mainFrame.curr:SetBackdropBorderColor(0.4,0.4,0.4,1)
+mainFrame.curr:SetScript("OnEnter",function(self) 
+	self:SetBackdropBorderColor(0.7,0.7,0.7,1)
+end)	
+mainFrame.curr:SetScript("OnLeave", function(self)    
+	self:SetBackdropBorderColor(0.4,0.4,0.4,1)
+end)
+mainFrame.curr:SetScript("OnMouseDown", function(self,button) 
+	
+end)
+
+local instanceName = GetInstanceInfo()
+mainFrame.curr.html = mainFrame.curr:CreateFontString(nil,"ARTWORK","GameFontWhite")
+mainFrame.curr.html:SetFont(ExRT.F.defFont, 10)
+mainFrame.curr.html:SetAllPoints()
+mainFrame.curr.html:SetJustifyH("CENTER")
+mainFrame.curr.html:SetText(instanceName)
+
+mainFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
+mainFrame:SetScript("OnEvent", function()
+	progress_counter = 0
+	RefreshProgress()
+    mainFrame.curr.html:SetText(progress_label)  -- Update button text with instance name
+end)
+mainFrame.curr.html:SetShadowOffset(1,-1)
+
+ELib:FixPreloadFont(mainFrame.curr,mainFrame.curr.html,ExRT.F.defFont, 10)
+
+mainFrame.next = CreateFrame("Button",nil,mainFrame,BackdropTemplateMixin and "BackdropTemplate")
+mainFrame.next:SetSize(120,24)
+mainFrame.next:SetPoint("TOPLEFT",mainFrame.edges[1],248, -48)
+mainFrame.next:SetBackdrop({bgFile = ExRT.F.barImg,edgeFile = ExRT.F.defBorder,tile = false,edgeSize = 6})
+mainFrame.next:SetBackdropColor(0,0,0,0)
+mainFrame.next:SetBackdropBorderColor(0.4,0.4,0.4,1)
+mainFrame.next:SetScript("OnEnter",function(self) 
+	self:SetBackdropBorderColor(0.7,0.7,0.7,1)
+end)	
+mainFrame.next:SetScript("OnLeave", function(self)    
+	self:SetBackdropBorderColor(0.4,0.4,0.4,1)
+end)
+mainFrame.next:SetScript("OnMouseDown", function(self,button) 
+	progress_steps = GetInstanceProgressSteps()
+	progress_counter = (progress_counter + 1) % progress_steps
+	RefreshProgress()
+	mainFrame.curr.html:SetText(progress_label) 	
+end)
+
+mainFrame.next.html = mainFrame.next:CreateFontString(nil,"ARTWORK","GameFontWhite")
+mainFrame.next.html:SetFont(ExRT.F.defFont, 10)
+mainFrame.next.html:SetAllPoints()
+mainFrame.next.html:SetJustifyH("CENTER")
+mainFrame.next.html:SetText(">> NEXT PHASE")
+mainFrame.next.html:SetShadowOffset(1,-1)
+
+ELib:FixPreloadFont(mainFrame.curr,mainFrame.curr.html,ExRT.F.defFont, 10)
+
+GenerateStaticTask(1, "RTSC T&M", function(self,button) 
+	SendChatMessage("@tank @melee rtsc select","RAID",nil,nil)
+end)
+GenerateStaticTask(2, "RTSC Target", function(self,button) 
+	SendChatMessage("rtsc select","WHISPER",nil,UnitName("target"))
+end)
+
+-- main refresh
+RefreshProgress()
+
+-- this is my domain LUSO
+
 do
 	local markbuts_backdrop = {bgFile = ExRT.F.barImg,edgeFile = ExRT.F.defBorder,tile = false,edgeSize = 8}
 
