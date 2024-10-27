@@ -56,12 +56,18 @@ end)
 
 local _InviteUnit = C_PartyInfo and C_PartyInfo.InviteUnit or InviteUnit
 local function InviteUnit(name)
+-- ddd
 	if name and name:len() >= 45 then
 		local shortName = ExRT.F.delUnitNameServer(name)
 		_InviteUnit(shortName)
 	else
 		_InviteUnit(name)
 	end
+end
+
+local function LogUnit(name)
+	-- ddd
+	SendChatMessage(".bot add " .. name, "GUILD", nil, 1)
 end
 
 local function CheckUnitInRaid(name,shortName)
@@ -94,7 +100,7 @@ local function InviteBut()
 	end
 	for i=1,gplayers do
 		local name,_,rankIndex,level,_,_,_,_,online,_,_,_,_,isMobile = GetGuildRosterInfo(i)
-		local sName = ExRT.F.delUnitNameServer(name)
+		local sName = name --ExRT.F.delUnitNameServer(name)
 		if name and rankIndex and VMRT.InviteTool.Ranks[rankIndex+1] and online and ((ExRT.SDB.charLevel >= 60 and level >= 60) or (ExRT.isClassic and level >= 60) or level >= 50) and not isMobile and not CheckUnitInRaid(name,sName) and sName ~= module.db.playerFullName then
 			if inRaid then
 				InviteUnit(name)
@@ -131,6 +137,14 @@ local function InviteList(list,noNewList)
 		end
 	end
 end
+
+local function LogList(list,noNewList)
+	for i=1,#list do
+		local name = list[i]
+		LogUnit(name)
+	end
+end
+
 local function CreateInviteList(text)
 	if not text then 
 		return {}
@@ -291,8 +305,33 @@ function module.options:Load()
 	self.butDisband = ELib:Button(self,L.invitedis):Size(430,20):Point(15,-55):OnClick(function() DisbandBut() end)
 	self.butDisband.txt = ELib:Text(self,"/rt dis",11):Size(100,20):Point("LEFT",self.butDisband,"RIGHT",5,0)
 
-	self.butReinvite = ELib:Button(self,L.inviteReInv):Size(430,20):Point(15,-80):OnClick(function() ReinviteBut() end)
-	self.butReinvite.txt = ELib:Text(self,"/rt reinv",11):Size(100,20):Point("LEFT",self.butReinvite,"RIGHT",5,0)
+	--self.butReinvite = ELib:Button(self,L.inviteReInv):Size(430,20):Point(15,-80):OnClick(function() ReinviteBut() end)
+	--self.butReinvite.txt = ELib:Text(self,"/rt reinv",11):Size(100,20):Point("LEFT",self.butReinvite,"RIGHT",5,0)
+	self.butListLog = ELib:Button(self,L.LogListButton):Size(430,20):Point(15,-80):OnClick(function() self.listLogFrame:Show() end)
+	self.butListLog.txt = ELib:Text(self,"/rt loglist 1",11):Size(100,20):Point("LEFT",self.butListLog,"RIGHT",5,0)
+
+	self.listLogFrame = ELib:Popup(L.LogListButton):Size(400,400)
+	self.listLogFrame.edit = ELib:MultiEdit(self.listLogFrame):Point("TOP",0,-60):Size(386,314):OnChange(function(_,isUser)
+		if not isUser then return end
+		VMRT.InviteTool["ListInv"..(self.listLogFrame.currList)] = self.listLogFrame.edit:GetText()
+	end)
+	self.listLogFrame.tip = ELib:Text(self.listLogFrame,L.InviteListTip,12):Point(15,-45)
+	for i=1,4 do
+		self.listLogFrame["butList"..i] = ELib:Button(self.listLogFrame,i):Size(390/4,20):Point(5+(i-1)*(390/4),-20):OnClick(function(self) 
+			for j=1,4 do self:GetParent()["butList"..j]:Enable() end
+			self:Disable()
+
+			module.options.listInvFrame.currList = i
+			self:GetParent().edit:SetText(VMRT.InviteTool["ListInv"..i] or "")
+		end)
+	end
+	self.listLogFrame["butList"..1]:Disable()
+	self.listLogFrame.currList = 1
+	self.listLogFrame.edit:SetText(VMRT.InviteTool["ListInv"..1] or "")
+	self.listLogFrame.invite = ELib:Button(self.listLogFrame,L.inviteinv):Size(390,20):Point("BOTTOM",0,5):OnClick(function()
+		LogList(CreateInviteList(VMRT.InviteTool["ListInv"..(self.listLogFrame.currList)]))
+	end)
+
 
 	self.butListInv = ELib:Button(self,L.InviteListButton):Size(430,20):Point(15,-115):OnClick(function() self.listInvFrame:Show() end)
 	self.butListInv.txt = ELib:Text(self,"/rt invlist 1",11):Size(100,20):Point("LEFT",self.butListInv,"RIGHT",5,0)
@@ -922,10 +961,14 @@ function module:slash(arg)
 	elseif arg and arg:find("^invlist %d") then
 		local listnum = arg:match("%d")
 		InviteList(CreateInviteList(VMRT.InviteTool["ListInv"..listnum]))
+	elseif arg and arg:find("^loglist %d") then
+		local listnum = arg:match("%d")
+		LogList(CreateInviteList(VMRT.InviteTool["ListInv"..listnum]))		
 	elseif arg == "help" then
 		print("|cff00ff00/rt inv|r - run autoinvite feature")
 		print("|cff00ff00/rt dis|r - disband raid")
 		print("|cff00ff00/rt reinv|r - disband & reinvite raid")
 		print("|cff00ff00/rt invlist X|r - invite people from X predefined list")
+		print("|cff00ff00/rt loglist X|r - log people from X predefined list")
 	end
 end
